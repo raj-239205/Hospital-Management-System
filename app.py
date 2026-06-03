@@ -21,6 +21,9 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Ensure the instance folder exists
+    os.makedirs(app.instance_path, exist_ok=True)
+    
     # Profile Upload configs
     UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'profiles')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
