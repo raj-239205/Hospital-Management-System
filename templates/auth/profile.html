@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h3 class="mb-1 text-primary-teal"><i class="bi bi-person-bounding-box me-2"></i>My Profile Settings</h3>
+        <p class="text-muted mb-0">Update contact settings, configure photo avatars, and review account audit logs.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Settings Navigation / Avatar -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-3 text-center mb-4">
+            <div class="profile-header-bg"></div>
+            <div class="profile-avatar-container position-relative">
+                {% if user.profile_photo and user.profile_photo != 'default_avatar.png' %}
+                    <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_photo) }}" class="profile-avatar rounded-circle mx-auto d-block object-fit-cover" style="width: 110px; height: 110px;">
+                {% else %}
+                    <div class="profile-avatar rounded-circle mx-auto d-flex align-items-center justify-content-center bg-teal text-white fs-1 fw-bold">
+                        {{ user.username[:2]|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-body py-4">
+                <h5 class="fw-bold mb-1">{{ user.username }}</h5>
+                <span class="badge bg-secondary text-uppercase mb-3 px-3 py-1 fs-9">{{ user.role }}</span>
+                <p class="text-muted small mb-0"><i class="bi bi-envelope me-1"></i>{{ user.email or 'No email registered' }}</p>
+                
+                <hr>
+                
+                <div class="list-group list-group-flush text-start rounded-3" id="profileTabs" role="tablist">
+                    <button class="list-group-item list-group-item-action active border-0 py-3" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings-panel" type="button" role="tab" aria-selected="true">
+                        <i class="bi bi-gear-fill me-2 text-primary"></i>Personal Details
+                    </button>
+                    <button class="list-group-item list-group-item-action border-0 py-3" id="password-tab" data-bs-toggle="tab" data-bs-target="#password-panel" type="button" role="tab" aria-selected="false">
+                        <i class="bi bi-key-fill me-2 text-primary"></i>Change Password
+                    </button>
+                    <button class="list-group-item list-group-item-action border-0 py-3" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-panel" type="button" role="tab" aria-selected="false">
+                        <i class="bi bi-clock-history me-2 text-primary"></i>Activity Audit Trail
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Settings Panels -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <div class="tab-content" id="profileTabContent">
+                    
+                    <!-- Panel 1: Personal Details -->
+                    <div class="tab-pane fade show active" id="settings-panel" role="tabpanel" aria-labelledby="settings-tab">
+                        <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Profile Info</h5>
+                        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            <input type="hidden" name="action_type" value="update_profile">
+                            
+                            <div class="row g-3">
+                                <!-- Email -->
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control border-secondary-subtle" name="email" id="email" value="{{ user.email or '' }}" placeholder="house@example.com" required>
+                                    <div class="invalid-feedback">Email is required.</div>
+                                </div>
+                                
+                                <!-- Phone (Role-dependent data fields resolution) -->
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">Phone Contact</label>
+                                    {% set default_phone = '' %}
+                                    {% if user.role == 'doctor' and user.doctor %}
+                                        {% set default_phone = user.doctor.phone %}
+                                    {% elif user.role == 'patient' and user.patient %}
+                                        {% set default_phone = user.patient.phone_number %}
+                                    {% endif %}
+                                    <input type="tel" class="form-control border-secondary-subtle" name="phone" id="phone" value="{{ default_phone }}">
+                                </div>
+                                
+                                <!-- Address (For patients) -->
+                                {% if user.role == 'patient' and user.patient %}
+                                <div class="col-12">
+                                    <label for="address" class="form-label">Residential Address</label>
+                                    <textarea class="form-control border-secondary-subtle" name="address" id="address" rows="3">{{ user.patient.address }}</textarea>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Photo Upload -->
+                                <div class="col-12 mt-4">
+                                    <label for="profile_photo" class="form-label fw-semibold">Upload Profile Avatar</label>
+                                    <input class="form-control border-secondary-subtle" type="file" id="profile_photo" name="profile_photo" accept="image/png, image/jpeg, image/jpg">
+                                    <small class="text-muted mt-1 d-block">Supported formats: JPEG, PNG. Max file size: 2MB.</small>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save me-1"></i>Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Panel 2: Change Password -->
+                    <div class="tab-pane fade" id="password-panel" role="tabpanel" aria-labelledby="password-tab">
+                        <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-key-fill me-2 text-primary"></i>Modify Credentials</h5>
+                        <form method="POST" class="needs-validation" novalidate>
+                            <input type="hidden" name="action_type" value="change_password">
+                            
+                            <div class="row g-3">
+                                <!-- Current Password -->
+                                <div class="col-12">
+                                    <label for="old_password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control border-secondary-subtle" name="old_password" id="old_password" required placeholder="Enter current password">
+                                    <div class="invalid-feedback">Old password is required.</div>
+                                </div>
+                                
+                                <!-- New Password -->
+                                <div class="col-12">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control border-secondary-subtle" name="new_password" id="new_password" required minlength="6" placeholder="Enter new password (Min 6 chars)">
+                                    <div class="invalid-feedback">New password must be at least 6 characters.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary px-4"><i class="bi bi-shield-check me-1"></i>Update Password</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Panel 3: Activity Trail -->
+                    <div class="tab-pane fade" id="history-panel" role="tabpanel" aria-labelledby="history-tab">
+                        <h5 class="fw-bold mb-4 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Account Audit Logs</h5>
+                        <div class="list-group list-group-flush border-top">
+                            {% if activities %}
+                                {% for act in activities %}
+                                <div class="list-group-item py-3 bg-transparent px-0">
+                                    <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold text-dark fs-9">{{ act.action }}</span>
+                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>{{ act.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                    </div>
+                                    <p class="mb-0 text-muted small">{{ act.details or 'No logs metadata.' }}</p>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-card-list fs-2 d-block mb-2"></i>
+                                    No activity logs compiled yet.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

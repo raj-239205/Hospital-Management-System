@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports Panel - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h3 class="mb-1 text-primary-teal"><i class="bi bi-graph-up-arrow me-2"></i>Reports & Audits</h3>
+        <p class="text-muted mb-0">Generate hospital audit records and export reports to PDF or Excel formats.</p>
+    </div>
+</div>
+
+<!-- Aggregated Summaries -->
+<div class="row g-4 mb-5">
+    <!-- Active Patients Breakdown -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4">
+                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">PATIENT BREAKDOWN</h6>
+                {% if patient_stats %}
+                    {% for stat in patient_stats %}
+                    <div class="d-flex justify-content-between mb-2 fs-9">
+                        <span>{{ stat[0] }}:</span>
+                        <span class="fw-bold">{{ stat[1] }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <span class="text-muted fs-9">No patient logs found.</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment distribution -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4">
+                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">APPOINTMENTS STATUS</h6>
+                {% if appointment_stats %}
+                    {% for stat in appointment_stats %}
+                    <div class="d-flex justify-content-between mb-2 fs-9">
+                        <span>{{ stat[0] }}:</span>
+                        <span class="fw-bold">{{ stat[1] }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <span class="text-muted fs-9">No appointments logged.</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Specialization Distribution -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4">
+                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">CLINICAL STAFFING</h6>
+                {% if specialization_stats %}
+                    {% for stat in specialization_stats[:4] %}
+                    <div class="d-flex justify-content-between mb-2 fs-9">
+                        <span class="text-truncate" style="max-width: 140px;">{{ stat[0] }}:</span>
+                        <span class="fw-bold">{{ stat[1] }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if specialization_stats|length > 4 %}
+                    <small class="text-muted d-block text-end mt-1">And {{ specialization_stats|length - 4 }} others...</small>
+                    {% endif %}
+                {% else %}
+                    <span class="text-muted fs-9">No doctors registered.</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Growth -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4">
+                <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">MONTHLY AUDIT</h6>
+                {% if revenue_stats %}
+                    {% for stat in revenue_stats[-4:] %}
+                    <div class="d-flex justify-content-between mb-2 fs-9">
+                        <span>{{ stat.month }}:</span>
+                        <span class="fw-bold text-success">${{ "{:,.2f}".format(stat.total) }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <span class="text-muted fs-9">No payments received yet.</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Action Panels -->
+<h4 class="fw-bold mb-3 text-dark">Data Exports</h4>
+<div class="row g-3">
+    <!-- Panel 1: Patient Report -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-info text-white me-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-people-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Patient Registrations</h5>
+                        <p class="text-muted mb-0 small" style="font-size: 0.85rem;">Admissions, demographics, diagnoses, and details.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('reports.export', report_type='patients', format_type='pdf') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF</a>
+                    <a href="{{ url_for('reports.export', report_type='patients', format_type='excel') }}" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel-fill me-1"></i>Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 2: Doctor Report -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-primary text-white me-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-heart-pulse-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Doctor Directories</h5>
+                        <p class="text-muted mb-0 small" style="font-size: 0.85rem;">Contact rosters, spec lists, and experiences.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('reports.export', report_type='doctors', format_type='pdf') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF</a>
+                    <a href="{{ url_for('reports.export', report_type='doctors', format_type='excel') }}" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel-fill me-1"></i>Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 3: Appointments Report -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-success text-white me-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-calendar-check fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Appointments Schedule</h5>
+                        <p class="text-muted mb-0 small" style="font-size: 0.85rem;">Slot schedules, doctor assignments, and completed reviews.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('reports.export', report_type='appointments', format_type='pdf') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF</a>
+                    <a href="{{ url_for('reports.export', report_type='appointments', format_type='excel') }}" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel-fill me-1"></i>Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 4: Revenue Audit Report -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon bg-warning text-white me-3" style="width: 50px; height: 50px;">
+                        <i class="bi bi-cash-stack fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Revenue & Billing Audit</h5>
+                        <p class="text-muted mb-0 small" style="font-size: 0.85rem;">Bills generated, taxes collected, and itemized charges.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="{{ url_for('reports.export', report_type='revenue', format_type='pdf') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF</a>
+                    <a href="{{ url_for('reports.export', report_type='revenue', format_type='excel') }}" class="btn btn-sm btn-outline-success"><i class="bi bi-file-earmark-excel-fill me-1"></i>Excel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

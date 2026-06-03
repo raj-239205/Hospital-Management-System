@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Write Prescription - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{{ url_for('prescriptions.index') }}" class="btn btn-light border me-3"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <h3 class="mb-1 text-primary-teal">Write Medication Prescription</h3>
+                <p class="text-muted mb-0">Record diagnosis details, list prescriptions, and log treatment advice.</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('prescriptions.write') }}" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <!-- Patient Select -->
+                        <div class="col-md-6">
+                            <label for="patient_id" class="form-label">Patient Profile <span class="text-danger">*</span></label>
+                            <select class="form-select" id="patient_id" name="patient_id" required>
+                                <option value="">-- Choose Patient --</option>
+                                {% for p in patients %}
+                                <option value="{{ p.id }}">{{ p.name }} (ID: P{{"%03d"|format(p.id)}})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a patient.</div>
+                        </div>
+
+                        <!-- Doctor Select (Only visible for Admin, Auto-selected for Doctor role) -->
+                        {% if current_user.role == 'admin' %}
+                        <div class="col-md-6">
+                            <label for="doctor_id" class="form-label">Prescribing Physician <span class="text-danger">*</span></label>
+                            <select class="form-select" id="doctor_id" name="doctor_id" required>
+                                <option value="">-- Choose Physician --</option>
+                                {% for doc in doctors %}
+                                <option value="{{ doc.id }}">Dr. {{ doc.name }} ({{ doc.specialization }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please assign the prescribing physician.</div>
+                        </div>
+                        {% else %}
+                        <input type="hidden" name="doctor_id" value="{{ current_user.doctor_id }}">
+                        {% endif %}
+
+                        <!-- Symptoms -->
+                        <div class="col-md-6">
+                            <label for="symptoms" class="form-label">Presented Symptoms</label>
+                            <textarea class="form-control border-secondary-subtle" id="symptoms" name="symptoms" rows="2" placeholder="e.g. Acute fatigue, persistent headache, fever"></textarea>
+                        </div>
+
+                        <!-- Diagnosis -->
+                        <div class="col-md-6">
+                            <label for="diagnosis" class="form-label">Clinical Diagnosis</label>
+                            <textarea class="form-control border-secondary-subtle" id="diagnosis" name="diagnosis" rows="2" placeholder="e.g. Hypertension stage-2, Viral infection"></textarea>
+                        </div>
+
+                        <!-- Medications -->
+                        <div class="col-12">
+                            <label for="medications" class="form-label">Medications & Dosages <span class="text-danger">*</span></label>
+                            <textarea class="form-control border-secondary-subtle" id="medications" name="medications" rows="3" required placeholder="e.g. Paracetamol 500mg - Twice daily for 5 days. Amoxicillin 250mg - Thrice daily."></textarea>
+                            <div class="invalid-feedback">Please list the prescribed medications.</div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="col-12">
+                            <label for="instructions" class="form-label">Clinical Advice / Instructions</label>
+                            <textarea class="form-control border-secondary-subtle" id="instructions" name="instructions" rows="2" placeholder="e.g. Keep hydrated. Return if symptoms worsen. Avoid strenuous activities."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('prescriptions.index') }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-file-earmark-plus me-1"></i>Save Prescription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

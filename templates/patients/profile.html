@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinical Patient File - Hope Care{% endblock %}
+
+{% block content %}
+<!-- Dynamically select user avatar gradient and initials -->
+{% set initials = (patient.name[0] | upper) if patient.name else 'P' %}
+{% set gd_class = 'avatar-gd-' ~ ((patient.name | length % 5) + 1) %}
+
+<div class="row align-items-center mb-5" data-aos="fade-down">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('patients.index') }}" class="btn btn-secondary border rounded-circle p-0 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;"><i class="bi bi-arrow-left fs-5"></i></a>
+            <div>
+                <h2 class="mb-1 text-dark" style="letter-spacing: -0.03em;">Patient Record</h2>
+                <p class="text-muted mb-0 small">Comprehensive details, history logs, and billing logs.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('patients.edit', patient_id=patient.id) }}" class="btn btn-secondary border me-2"><i class="bi bi-pencil-square me-1"></i>Edit File</a>
+        {% if current_user.role == 'admin' %}
+        <a href="{{ url_for('billing.generate', patient_id=patient.id) }}" class="btn btn-primary"><i class="bi bi-receipt me-1"></i>Compile Bill</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Demographics Card -->
+    <div class="col-lg-4" data-aos="fade-right">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4 text-center">
+                
+                <!-- Avatar & Name -->
+                <div class="avatar-circle {{ gd_class }} avatar-large d-flex align-items-center justify-content-center fw-bold shadow-sm mx-auto mb-3">
+                    {{ initials }}
+                </div>
+                <h4 class="fw-bold mb-1 text-dark">{{ patient.name }}</h4>
+                <span class="badge bg-secondary-subtle text-secondary mb-3">ID: P{{"%03d"|format(patient.id)}}</span>
+                
+                <div class="mb-3">
+                    {% if patient.status == 'Admitted' %}
+                        <span class="status-pill pill-success">Admitted</span>
+                    {% elif patient.status == 'Discharged' %}
+                        <span class="status-pill pill-danger">Discharged</span>
+                    {% else %}
+                        <span class="status-pill pill-info">Outpatient</span>
+                    {% endif %}
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Vital Specs -->
+                <div class="text-start space-y-3">
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Age / Gender</small>
+                        <span class="fw-semibold text-dark">{{ patient.age }} Years Old | {{ patient.gender }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Blood Group</small>
+                        <span class="fw-semibold text-danger"><i class="bi bi-droplet-fill"></i> {{ patient.blood_group or 'Unknown' }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Contact Phone</small>
+                        <span class="fw-semibold text-dark">{{ patient.phone_number }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Residential Address</small>
+                        <span class="fw-semibold text-dark" style="font-size: 0.9rem;">{{ patient.address }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Diagnosis / Disease</small>
+                        <span class="fw-semibold text-dark">{{ patient.disease or 'General consultation' }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Admission Date</small>
+                        <span class="fw-semibold text-dark">{{ patient.admission_date.strftime('%B %d, %Y') }}</span>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Assigned Room -->
+                <div class="text-start">
+                    <small class="text-muted d-block text-uppercase fw-semibold mb-2" style="font-size: 0.725rem;">Assigned Room Info</small>
+                    {% if room %}
+                        <div class="p-3 bg-light rounded d-flex align-items-center justify-content-between border" style="background-color: var(--body-bg) !important;">
+                            <div>
+                                <span class="fw-semibold text-dark d-block"><i class="bi bi-door-closed text-primary me-2"></i>Room {{ room.room_number }}</span>
+                                <small class="text-muted">{{ room.room_type }}</small>
+                            </div>
+                            <form method="POST" action="{{ url_for('rooms.release', room_number=room.room_number) }}">
+                                <button type="submit" class="btn btn-sm btn-link text-danger text-decoration-none fw-semibold p-0">Release</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <span class="text-muted small d-block mb-2">No bed currently assigned.</span>
+                        <a href="{{ url_for('rooms.index') }}" class="btn btn-sm btn-outline-primary w-100 py-2"><i class="bi bi-door-open-fill me-1"></i>Assign Hospital Bed</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Tabbed Info -->
+    <div class="col-lg-8" data-aos="fade-left">
+        <!-- Navigation Tab list -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 pt-3 px-4">
+                <ul class="nav nav-tabs card-header-tabs" id="clinicalTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold text-dark border-0 py-3 px-4" id="appt-tab" data-bs-toggle="tab" data-bs-target="#appt-panel" type="button" role="tab" aria-controls="appt-panel" aria-selected="true" style="font-size: 0.9rem;">
+                            <i class="bi bi-calendar3 me-2"></i>Consultations
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold text-dark border-0 py-3 px-4" id="invoice-tab" data-bs-toggle="tab" data-bs-target="#invoice-panel" type="button" role="tab" aria-controls="invoice-panel" aria-selected="false" style="font-size: 0.9rem;">
+                            <i class="bi bi-receipt me-2"></i>Invoices & Billing
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="tab-content" id="clinicalTabContent">
+                    
+                    <!-- Tab Panel 1: Consultations -->
+                    <div class="tab-pane fade show active" id="appt-panel" role="tabpanel" aria-labelledby="appt-tab">
+                        <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+                            <h6 class="fw-bold mb-0 text-dark">Roster Appointment History</h6>
+                            <a href="{{ url_for('appointments.book', patient_id=patient.id) }}" class="btn btn-sm btn-primary py-1"><i class="bi bi-plus me-1"></i>Book Appointment</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 crm-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4">Doctor</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if appointments %}
+                                        {% for appt in appointments %}
+                                        <tr>
+                                            <td class="px-4">
+                                                <div class="fw-semibold text-dark">Dr. {{ appt.doctor.name }}</div>
+                                                <small class="text-muted">{{ appt.doctor.specialization }}</small>
+                                            </td>
+                                            <td>
+                                                <div>{{ appt.appointment_date.strftime('%d-%b-%Y') }}</div>
+                                                <small class="text-muted">{{ appt.appointment_time }}</small>
+                                            </td>
+                                            <td>
+                                                {% if appt.status == 'Scheduled' %}
+                                                    <span class="status-pill pill-info">Scheduled</span>
+                                                {% elif appt.status == 'Completed' %}
+                                                    <span class="status-pill pill-success">Completed</span>
+                                                {% else %}
+                                                    <span class="status-pill pill-danger">Cancelled</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if appt.status == 'Scheduled' %}
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-secondary border p-1 rounded-circle d-flex align-items-center justify-content-center dropdown-toggle no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 28px; height: 28px;">
+                                                        <i class="bi bi-chevron-down"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="border-radius: var(--radius-md);">
+                                                        <li>
+                                                            <form method="POST" action="{{ url_for('appointments.update_status', appointment_id=appt.id) }}">
+                                                                <input type="hidden" name="status" value="Completed">
+                                                                <button type="submit" class="dropdown-item py-2 small"><i class="bi bi-check2-circle text-success me-2"></i>Complete</button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <form method="POST" action="{{ url_for('appointments.cancel', appointment_id=appt.id) }}">
+                                                                <button type="submit" class="dropdown-item text-danger py-2 small"><i class="bi bi-x-circle me-2"></i>Cancel</button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                {% else %}
+                                                <span class="text-muted small">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4 text-muted">No appointments found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab Panel 2: Billing Invoices -->
+                    <div class="tab-pane fade" id="invoice-panel" role="tabpanel" aria-labelledby="invoice-tab">
+                        <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+                            <h6 class="fw-bold mb-0 text-dark">Invoice Ledgers</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 crm-table">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4">Invoice ID</th>
+                                        <th>Date Generated</th>
+                                        <th>Breakdown</th>
+                                        <th>Amount</th>
+                                        <th class="text-center">PDF</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if bills %}
+                                        {% for bill in bills %}
+                                        <tr>
+                                            <td class="px-4"><span class="fw-bold text-dark">#INV-{{ "%05d"|format(bill.id) }}</span></td>
+                                            <td>{{ bill.date_generated.strftime('%d-%b-%Y') }}</td>
+                                            <td>
+                                                <small class="d-block text-muted">Consult: ${{ bill.consultation_charges }} | Room: ${{ bill.room_charges }} | Pharm: ${{ bill.medicine_charges }}</small>
+                                            </td>
+                                            <td class="fw-bold text-success">${{ bill.total_amount }}</td>
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <a href="{{ url_for('billing.view', bill_id=bill.id) }}" class="btn btn-sm btn-secondary border p-1 rounded-circle d-flex align-items-center justify-content-center" title="View" style="width: 28px; height: 28px;"><i class="bi bi-eye"></i></a>
+                                                    <a href="{{ url_for('billing.download', bill_id=bill.id) }}" class="btn btn-sm btn-primary p-1 rounded-circle d-flex align-items-center justify-content-center" title="Download PDF" style="width: 28px; height: 28px;"><i class="bi bi-download"></i></a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">No invoices generated yet.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

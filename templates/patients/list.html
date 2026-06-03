@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Patients Directory - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-5">
+    <div class="col-md-6" data-aos="fade-right">
+        <h2 class="mb-1 text-dark" style="letter-spacing: -0.03em;">Patient Directory</h2>
+        <p class="text-muted mb-0 small">Admit, monitor, search, and manage patient profiles.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0" data-aos="fade-left">
+        <a href="{{ url_for('patients.add') }}" class="btn btn-primary shadow-sm"><i class="bi bi-person-plus-fill me-1"></i>Admit New Patient</a>
+    </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row g-4 mb-5" data-aos="fade-up">
+    <!-- Card 1: Total Patients -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card stats-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">Total Patients</span>
+                <div class="stats-icon-bg bg-primary-light text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1 text-dark">{{ total_patients_count }}</h3>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <span class="small text-muted">Active database</span>
+                <svg class="mini-sparkline" viewBox="0 0 100 30" width="70" height="20">
+                    <path d="M0,25 Q15,20 30,10 T60,18 T90,2 T100,5" fill="none" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card 2: Inpatients (Admitted) -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card stats-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">Active Inpatients</span>
+                <div class="stats-icon-bg bg-success-light text-success">
+                    <i class="bi bi-heart-pulse-fill"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1 text-dark">{{ inpatients_count }}</h3>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <span class="small text-muted">Currently admitted</span>
+                <svg class="mini-sparkline" viewBox="0 0 100 30" width="70" height="20">
+                    <path d="M0,20 Q20,10 40,25 T80,5 T100,2" fill="none" stroke="var(--success-color)" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Outpatients -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card stats-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">Outpatients Logged</span>
+                <div class="stats-icon-bg bg-info-light text-info">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1 text-dark">{{ outpatients_count }}</h3>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <span class="small text-muted">OPD visits registered</span>
+                <svg class="mini-sparkline" viewBox="0 0 100 30" width="70" height="20">
+                    <path d="M0,25 Q15,12 30,22 T60,14 T90,6 T100,2" fill="none" stroke="var(--accent-color)" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Discharged Patients -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card stats-card p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted small fw-semibold">Discharged Patients</span>
+                <div class="stats-icon-bg bg-warning-light text-warning">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold mb-1 text-dark">{{ discharged_count }}</h3>
+            <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+                <span class="small text-muted">Cleared discharges</span>
+                <svg class="mini-sparkline" viewBox="0 0 100 30" width="70" height="20">
+                    <path d="M0,15 T30,25 T60,10 T90,20 T100,5" fill="none" stroke="var(--warning-color)" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="card border-0 shadow-sm mb-4" data-aos="fade-up">
+    <div class="card-body p-4">
+        <form method="GET" action="{{ url_for('patients.index') }}" class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small fw-semibold text-dark">Search Directory</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{ search_query }}" placeholder="ID, name, or phone number...">
+                </div>
+            </div>
+            
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold text-dark">Admit Status</label>
+                <select class="form-select" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="Admitted" {% if status_filter == 'Admitted' %}selected{% endif %}>Admitted</option>
+                    <option value="Discharged" {% if status_filter == 'Discharged' %}selected{% endif %}>Discharged</option>
+                    <option value="Outpatient" {% if status_filter == 'Outpatient' %}selected{% endif %}>Outpatient</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold text-dark">Gender</label>
+                <select class="form-select" name="gender">
+                    <option value="">All Genders</option>
+                    <option value="Male" {% if gender_filter == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if gender_filter == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if gender_filter == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold text-dark">Admission From</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label small fw-semibold text-dark">Admission To</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+            </div>
+            
+            <div class="col-lg-1 col-md-6 d-flex align-items-end">
+                <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary w-100 d-flex justify-content-center align-items-center py-2" title="Filter"><i class="bi bi-funnel"></i></button>
+                    <a href="{{ url_for('patients.index') }}" class="btn btn-secondary border w-100 d-flex justify-content-center align-items-center py-2" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Patients Table -->
+<div class="table-responsive-custom mb-4" data-aos="fade-up">
+    <table class="table table-hover align-middle crm-table">
+        <thead>
+            <tr>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>Age / Gender</th>
+                <th>Contact Details</th>
+                <th>Intake Date</th>
+                <th>Diagnosis</th>
+                <th>Status</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if patients %}
+                {% for patient in patients %}
+                {% set initials = (patient.name[0] | upper) if patient.name else 'P' %}
+                {% set gd_class = 'avatar-gd-' ~ ((patient.name | length % 5) + 1) %}
+                <tr>
+                    <td><span class="fw-bold text-dark">P{{"%03d"|format(patient.id)}}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-circle {{ gd_class }} d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; font-size: 0.85rem;">
+                                {{ initials }}
+                            </div>
+                            <div>
+                                <a href="{{ url_for('patients.view', patient_id=patient.id) }}" class="fw-semibold text-dark text-decoration-none hover-primary">{{ patient.name }}</a>
+                                <small class="text-muted d-block"><i class="bi bi-droplet-fill text-danger me-1" style="font-size: 10px;"></i>{{ patient.blood_group or 'N/A' }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ patient.age }} yrs / {{ patient.gender }}</td>
+                    <td>
+                        <div class="small"><i class="bi bi-telephone text-muted me-1"></i>{{ patient.phone_number }}</div>
+                        <div class="small text-muted"><i class="bi bi-envelope text-muted me-1"></i>{{ patient.user.email if patient.user else (patient.name.lower().replace(' ', '') ~ '@hospital.com') }}</div>
+                    </td>
+                    <td>{{ patient.admission_date.strftime('%d-%b-%Y') }}</td>
+                    <td><span class="text-truncate d-inline-block fw-semibold" style="max-width: 140px; color: var(--text-primary);">{{ patient.disease or 'General Intake' }}</span></td>
+                    <td>
+                        {% if patient.status == 'Admitted' %}
+                            <span class="status-pill pill-success">Admitted</span>
+                        {% elif patient.status == 'Discharged' %}
+                            <span class="status-pill pill-danger">Discharged</span>
+                        {% else %}
+                            <span class="status-pill pill-info">Outpatient</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-secondary border p-1 rounded-circle d-flex align-items-center justify-content-center dropdown-toggle no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 30px; height: 30px;">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="border-radius: var(--radius-md);">
+                                <li><a class="dropdown-item py-2 small" href="{{ url_for('patients.view', patient_id=patient.id) }}"><i class="bi bi-eye-fill me-2 text-muted"></i>View Profile</a></li>
+                                <li><a class="dropdown-item py-2 small" href="{{ url_for('patients.edit', patient_id=patient.id) }}"><i class="bi bi-pencil-square me-2 text-muted"></i>Edit Details</a></li>
+                                
+                                {% if current_user.role == 'admin' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('patients.delete', patient_id=patient.id) }}" onsubmit="return confirm('Are you sure you want to delete patient {{ patient.name }}? This will delete all corresponding medical and billing history.');">
+                                        <button type="submit" class="dropdown-item text-danger py-2 small"><i class="bi bi-trash-fill me-2"></i>Delete Patient</button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="bi bi-people fs-1 d-block mb-3"></i>
+                        No patients found matching the criteria.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if pagination and pagination.pages > 1 %}
+<nav class="mt-4" aria-label="Page navigation" data-aos="fade-up">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link shadow-sm border" href="{{ url_for('patients.index', page=pagination.prev_num, search=search_query, status=status_filter, gender=gender_filter, date_from=date_from, date_to=date_to) }}" aria-label="Previous">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link shadow-sm border" href="{{ url_for('patients.index', page=page_num, search=search_query, status=status_filter, gender=gender_filter, date_from=date_from, date_to=date_to) }}">{{ page_num }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link shadow-sm border">...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link shadow-sm border" href="{{ url_for('patients.index', page=pagination.next_num, search=search_query, status=status_filter, gender=gender_filter, date_from=date_from, date_to=date_to) }}" aria-label="Next">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

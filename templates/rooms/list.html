@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Room & Ward Management - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h3 class="mb-1 text-primary-teal"><i class="bi bi-door-closed-fill me-2"></i>Rooms & Wards</h3>
+        <p class="text-muted mb-0">Track occupancy levels, assign rooms to admitted patients, and update bed capacities.</p>
+    </div>
+    {% if current_user.role == 'admin' %}
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#addRoomCollapse"><i class="bi bi-plus-lg me-1"></i>Configure New Room</button>
+    </div>
+    {% endif %}
+</div>
+
+{% if current_user.role == 'admin' %}
+<!-- Add Room Collapse Form -->
+<div class="collapse mb-4" id="addRoomCollapse">
+    <div class="card card-body border-0 shadow-sm rounded-3">
+        <h5 class="fw-bold mb-3 text-dark">Register Room Config</h5>
+        <form method="POST" action="{{ url_for('rooms.add') }}" class="row g-3 align-items-end needs-validation" novalidate>
+            <div class="col-md-5">
+                <label for="room_number" class="form-label">Room Number / ID <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="room_number" name="room_number" required placeholder="e.g. Ward-302B">
+                <div class="invalid-feedback">Room designation is required.</div>
+            </div>
+            <div class="col-md-5">
+                <label for="room_type" class="form-label">Room / Ward Type <span class="text-danger">*</span></label>
+                <select class="form-select" id="room_type" name="room_type" required>
+                    <option value="">Choose Type...</option>
+                    <option value="General Ward">General Ward</option>
+                    <option value="Semi-Private">Semi-Private Ward</option>
+                    <option value="Private Suite">Private Suite</option>
+                    <option value="ICU">ICU (Intensive Care)</option>
+                    <option value="Emergency Room">Emergency Room</option>
+                </select>
+                <div class="invalid-feedback">Select room ward category.</div>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Rooms Grid Layout -->
+<div class="row g-3">
+    {% if rooms %}
+        {% for room in rooms %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100 border-start border-4 {% if room.availability_status %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fs-5 fw-bold text-dark"><i class="bi bi-door-closed text-muted me-1"></i>Room {{ room.room_number }}</span>
+                            <span class="badge bg-light text-dark border">{{ room.room_type }}</span>
+                        </div>
+                        
+                        <!-- Status indicator -->
+                        <div class="mb-3">
+                            {% if room.availability_status %}
+                                <span class="text-success"><i class="bi bi-circle-fill fs-9 me-1" style="font-size: 8px;"></i>VACANT / AVAILABLE</span>
+                            {% else %}
+                                <span class="text-danger"><i class="bi bi-circle-fill fs-9 me-1" style="font-size: 8px;"></i>OCCUPIED</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Occupying Patient Details -->
+                        {% if not room.availability_status and room.assigned_patient %}
+                        <div class="p-3 bg-light rounded-3 mb-3 border">
+                            <small class="text-muted d-block mb-1">CURRENTLY ASSIGNED:</small>
+                            <a href="{{ url_for('patients.view', patient_id=room.assigned_patient.id) }}" class="fw-bold text-dark text-decoration-none">
+                                {{ room.assigned_patient.name }}
+                            </a>
+                            <small class="d-block text-muted mt-1">Diagnosis: {{ room.assigned_patient.disease or 'N/A' }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Assignments Form/Release button -->
+                    <div class="pt-2 border-top">
+                        {% if room.availability_status %}
+                            <!-- Assign Patient Form -->
+                            <form method="POST" action="{{ url_for('rooms.assign', room_number=room.room_number) }}" class="d-flex gap-1">
+                                <select class="form-select form-select-sm" name="patient_id" required>
+                                    <option value="">-- Assign Patient --</option>
+                                    {% for p in available_patients %}
+                                    <option value="{{ p.id }}">{{ p.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary" title="Assign Bed"><i class="bi bi-person-plus-fill"></i></button>
+                            </form>
+                        {% else %}
+                            <!-- Release button -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <form method="POST" action="{{ url_for('rooms.release', room_number=room.room_number) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right me-1"></i>Release Bed</button>
+                                </form>
+                                
+                                {% if current_user.role == 'admin' %}
+                                <form method="POST" action="{{ url_for('rooms.delete', room_number=room.room_number) }}" onsubmit="return confirm('Are you sure you want to delete room {{ room.room_number }}?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Delete Config"><i class="bi bi-trash"></i></button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-door-closed fs-1 d-block mb-3"></i>
+            No ward rooms configured yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

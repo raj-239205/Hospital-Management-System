@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Appointment - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center mb-4">
+            <a href="{{ url_for('appointments.index') }}" class="btn btn-light border me-3"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <h3 class="mb-1 text-primary-teal">Book Consultation Slot</h3>
+                <p class="text-muted mb-0">Select a patient, clinical specialization, and coordinate with doctor rosters.</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('appointments.book') }}" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <!-- Patient Select -->
+                        <div class="col-12">
+                            <label for="patient_id" class="form-label">Patient <span class="text-danger">*</span></label>
+                            <select class="form-select" id="patient_id" name="patient_id" required>
+                                <option value="">-- Choose Patient --</option>
+                                {% for p in patients %}
+                                <option value="{{ p.id }}" {% if pre_selected_patient_id == p.id %}selected{% endif %}>{{ p.name }} (ID: P{{"%03d"|format(p.id)}} | Status: {{ p.status }})</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a patient.</div>
+                        </div>
+
+                        <!-- Specialization Select (Triggers Doctor Dynamic Populating) -->
+                        <div class="col-md-6">
+                            <label for="specialization-select" class="form-label">Department Specialization <span class="text-danger">*</span></label>
+                            <select class="form-select" id="specialization-select" required>
+                                <option value="">-- Choose Department --</option>
+                                {% for spec in ['General Medicine', 'Pediatrics', 'Cardiology', 'Neurology', 'Orthopedics', 'Dermatology', 'Oncology'] %}
+                                <option value="{{ spec }}">{{ spec }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a department.</div>
+                        </div>
+
+                        <!-- Doctor Select -->
+                        <div class="col-md-6">
+                            <label for="doctor-select" class="form-label">Assigned Doctor <span class="text-danger">*</span></label>
+                            <select class="form-select" id="doctor-select" name="doctor_id" required>
+                                <option value="">-- Choose Specialization First --</option>
+                            </select>
+                            <div class="invalid-feedback">Please assign a doctor.</div>
+                        </div>
+
+                        <!-- Appointment Date -->
+                        <div class="col-md-6">
+                            <label for="appointment_date" class="form-label">Appointment Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="appointment_date" name="appointment_date" min="{{ today }}" required>
+                            <div class="invalid-feedback">Please choose a valid booking date.</div>
+                        </div>
+
+                        <!-- Appointment Time Slot -->
+                        <div class="col-md-6">
+                            <label for="appointment_time" class="form-label">Time Slot <span class="text-danger">*</span></label>
+                            <select class="form-select" id="appointment_time" name="appointment_time" required>
+                                <option value="">-- Select Time Slot --</option>
+                                {% for time in ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'] %}
+                                <option value="{{ time }}">{{ time }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a time slot.</div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <input type="hidden" name="status" value="Scheduled">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('appointments.index') }}" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4"><i class="bi bi-calendar-event me-1"></i>Confirm Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

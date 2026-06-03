@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctors Directory - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-5">
+    <div class="col-md-6" data-aos="fade-right">
+        <h2 class="mb-1 text-dark" style="letter-spacing: -0.03em;">Clinicians Directory</h2>
+        <p class="text-muted mb-0 small">Manage clinical staff, specialties, schedules, and patient rosters.</p>
+    </div>
+    {% if current_user.role == 'admin' %}
+    <div class="col-md-6 text-md-end mt-3 mt-md-0" data-aos="fade-left">
+        <a href="{{ url_for('doctors.add') }}" class="btn btn-primary shadow-sm"><i class="bi bi-person-plus-fill me-1"></i>Register New Doctor</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Search & Specialization Filters -->
+<div class="card border-0 shadow-sm mb-5" data-aos="fade-up">
+    <div class="card-body p-4">
+        <form method="GET" action="{{ url_for('doctors.index') }}" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-semibold text-dark">Search Directory</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="search" value="{{ search_query }}" placeholder="Search by name, specialization, email...">
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold text-dark">Specialty Area</label>
+                <select class="form-select" name="specialization">
+                    <option value="">All Specializations</option>
+                    {% for spec in specializations %}
+                    <option value="{{ spec }}" {% if specialization_filter == spec %}selected{% endif %}>{{ spec }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary w-100 py-2 d-flex justify-content-center align-items-center" title="Apply Filter"><i class="bi bi-funnel"></i></button>
+                    <a href="{{ url_for('doctors.index') }}" class="btn btn-secondary border w-100 py-2 d-flex justify-content-center align-items-center" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Doctors Grid Card Layout -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4" data-aos="fade-up">
+    {% if doctors %}
+        {% for doctor in doctors %}
+        {% set initials = (doctor.name[0] | upper) if doctor.name else 'D' %}
+        <!-- Assign gradient based on department length -->
+        {% set gd_class = 'avatar-gd-' ~ (((doctor.specialization | length) % 5) + 1) %}
+        <!-- Generate star rating based on experience or ID -->
+        {% set rating = (4.5 + (doctor.experience % 6) * 0.1) if doctor.experience else 4.8 %}
+        <div class="col">
+            <div class="card h-100 doctor-card">
+                
+                <!-- Action Dropdown for Admin -->
+                {% if current_user.role == 'admin' %}
+                <div class="position-absolute" style="top: 15px; right: 15px; z-index: 5;">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light border p-1 rounded-circle d-flex align-items-center justify-content-center dropdown-toggle no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 28px; height: 28px;">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="border-radius: var(--radius-md);">
+                            <li><a class="dropdown-item py-2 small" href="{{ url_for('doctors.edit', doctor_id=doctor.id) }}"><i class="bi bi-pencil-square me-2 text-muted"></i>Edit Staff</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="{{ url_for('doctors.delete', doctor_id=doctor.id) }}" onsubmit="return confirm('Are you sure you want to delete Dr. {{ doctor.name }}? This will delete their corresponding login user details.');">
+                                    <button type="submit" class="dropdown-item text-danger py-2 small"><i class="bi bi-trash-fill me-2"></i>Remove Doctor</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Doctor ID Badge -->
+                <span class="badge bg-secondary-subtle text-secondary position-absolute small" style="top: 15px; left: 15px; font-size: 0.725rem;">D{{"%03d"|format(doctor.id)}}</span>
+
+                <!-- Avatar Circle -->
+                <div class="avatar-circle {{ gd_class }} avatar-large d-flex align-items-center justify-content-center fw-bold shadow-sm">
+                    {{ initials }}
+                </div>
+
+                <!-- Rating -->
+                <div class="rating-stars">
+                    {% set full_stars = rating | int %}
+                    {% for i in range(full_stars) %}
+                        <i class="bi bi-star-fill"></i>
+                    {% endfor %}
+                    {% if rating - full_stars >= 0.5 %}
+                        <i class="bi bi-star-half"></i>
+                    {% endif %}
+                    <span class="text-muted small ms-1 fw-bold">{{ "%.1f"|format(rating) }}</span>
+                </div>
+
+                <!-- Doctor Details -->
+                <h4 class="fw-bold mb-1"><a href="{{ url_for('doctors.view', doctor_id=doctor.id) }}" class="text-dark text-decoration-none hover-primary">Dr. {{ doctor.name }}</a></h4>
+                <span class="badge rounded-pill bg-teal-light text-primary-teal mb-3 px-3 py-2" style="font-size: 0.775rem;">{{ doctor.specialization }}</span>
+
+                <div class="text-start mt-2 px-3">
+                    <div class="small mb-1 text-secondary"><i class="bi bi-telephone text-muted me-2"></i>{{ doctor.phone }}</div>
+                    <div class="small mb-1 text-secondary text-truncate"><i class="bi bi-envelope text-muted me-2"></i>{{ doctor.email }}</div>
+                    <div class="small text-secondary"><i class="bi bi-briefcase text-muted me-2"></i>{{ doctor.experience }} Years Experience</div>
+                </div>
+
+                <!-- Status Badge -->
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center px-3">
+                    <span class="small fw-semibold text-dark">Availability</span>
+                    {% if doctor.availability == 'Available' %}
+                        <span class="small fw-bold text-success"><span class="status-dot dot-available"></span>Active / Present</span>
+                    {% else %}
+                        <span class="small fw-bold text-danger"><span class="status-dot dot-unavailable"></span>On Leave / Away</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-person-vcard fs-1 d-block mb-3"></i>
+            No doctors registered in directory yet.
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if pagination and pagination.pages > 1 %}
+<nav class="mt-4" aria-label="Page navigation" data-aos="fade-up">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link shadow-sm border" href="{{ url_for('doctors.index', page=pagination.prev_num, search=search_query, specialization=specialization_filter) }}" aria-label="Previous">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link shadow-sm border" href="{{ url_for('doctors.index', page=page_num, search=search_query, specialization=specialization_filter) }}">{{ page_num }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link shadow-sm border">...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link shadow-sm border" href="{{ url_for('doctors.index', page=pagination.next_num, search=search_query, specialization=specialization_filter) }}" aria-label="Next">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

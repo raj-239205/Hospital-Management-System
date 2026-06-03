@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Prescriptions - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h3 class="mb-1 text-primary-teal"><i class="bi bi-capsule-pill me-2"></i>Medical Prescriptions</h3>
+        <p class="text-muted mb-0">Record, write, view, and print medication scripts and dosages.</p>
+    </div>
+    {% if current_user.role in ['admin', 'doctor'] %}
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('prescriptions.write') }}" class="btn btn-primary"><i class="bi bi-pencil-fill me-1"></i>Write New Prescription</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="table-responsive-custom">
+    <table class="table table-hover table-custom align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Rx ID</th>
+                <th>Patient</th>
+                <th>Prescribing Doctor</th>
+                <th>Date Written</th>
+                <th>Diagnosis</th>
+                <th>Medications List</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if prescriptions %}
+                {% for rx in prescriptions %}
+                <tr>
+                    <td><span class="fw-semibold text-muted">#RX-{{ "%04d"|format(rx.id) }}</span></td>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ rx.patient.name }}</div>
+                        <small class="text-muted">ID: P{{"%03d"|format(rx.patient_id)}}</small>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark">Dr. {{ rx.doctor.name }}</div>
+                        <small class="text-muted">{{ rx.doctor.specialization }}</small>
+                    </td>
+                    <td>{{ rx.date_written.strftime('%d-%b-%Y') }}</td>
+                    <td><span class="text-truncate d-inline-block" style="max-width: 140px;">{{ rx.diagnosis or 'Checkup evaluation' }}</span></td>
+                    <td><span class="text-truncate d-inline-block text-muted small" style="max-width: 180px;">{{ rx.medications }}</span></td>
+                    <td>
+                        <div class="d-flex justify-content-center gap-1">
+                            <a href="{{ url_for('prescriptions.view', prescription_id=rx.id) }}" class="btn btn-sm btn-outline-teal" title="View Prescription Details"><i class="bi bi-eye"></i> View</a>
+                            
+                            {% if current_user.role in ['admin', 'doctor'] %}
+                            <form method="POST" action="{{ url_for('prescriptions.delete', prescription_id=rx.id) }}" onsubmit="return confirm('Are you sure you want to delete this prescription record?');" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="bi bi-card-list fs-1 d-block mb-3"></i>
+                        No prescriptions records registered yet.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

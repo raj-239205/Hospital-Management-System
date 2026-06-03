@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Clinician Profile - Hope Care{% endblock %}
+
+{% block content %}
+<!-- Dynamically select user avatar gradient and initials -->
+{% set initials = (doctor.name[0] | upper) if doctor.name else 'D' %}
+{% set gd_class = 'avatar-gd-' ~ (((doctor.specialization | length) % 5) + 1) %}
+{% set rating = (4.5 + (doctor.experience % 6) * 0.1) if doctor.experience else 4.8 %}
+
+<div class="row align-items-center mb-5" data-aos="fade-down">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('doctors.index') }}" class="btn btn-secondary border rounded-circle p-0 d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;"><i class="bi bi-arrow-left fs-5"></i></a>
+            <div>
+                <h2 class="mb-1 text-dark" style="letter-spacing: -0.03em;">Clinician Profile</h2>
+                <p class="text-muted mb-0 small">Rosters, credentials, and scheduled consultations.</p>
+            </div>
+        </div>
+    </div>
+    {% if current_user.role == 'admin' %}
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('doctors.edit', doctor_id=doctor.id) }}" class="btn btn-secondary border"><i class="bi bi-pencil-square me-1"></i>Edit Profile</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    <!-- Bio / Info Column -->
+    <div class="col-lg-4" data-aos="fade-right">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 text-center">
+                <!-- Avatar Large -->
+                <div class="avatar-circle {{ gd_class }} avatar-large d-flex align-items-center justify-content-center fw-bold shadow-sm mx-auto mb-3">
+                    {{ initials }}
+                </div>
+                
+                <!-- Rating -->
+                <div class="rating-stars mb-2">
+                    {% set full_stars = rating | int %}
+                    {% for i in range(full_stars) %}
+                        <i class="bi bi-star-fill"></i>
+                    {% endfor %}
+                    {% if rating - full_stars >= 0.5 %}
+                        <i class="bi bi-star-half"></i>
+                    {% endif %}
+                    <span class="text-muted small ms-1 fw-bold">{{ "%.1f"|format(rating) }}</span>
+                </div>
+
+                <h4 class="fw-bold mb-1 text-dark">Dr. {{ doctor.name }}</h4>
+                <span class="badge rounded-pill bg-teal-light text-primary-teal mb-3 px-3 py-2" style="font-size: 0.775rem;">{{ doctor.specialization }}</span>
+                
+                <div class="mb-3">
+                    {% if doctor.availability == 'Available' %}
+                        <span class="status-pill pill-success">Available for Duty</span>
+                    {% else %}
+                        <span class="status-pill pill-danger">Away / On Leave</span>
+                    {% endif %}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="text-start space-y-3">
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Experience</small>
+                        <span class="fw-semibold text-dark">{{ doctor.experience }} Years of Practice</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Contact Phone</small>
+                        <span class="fw-semibold text-dark">{{ doctor.phone }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Email Address</small>
+                        <span class="fw-semibold text-dark text-truncate d-block">{{ doctor.email }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block text-uppercase fw-semibold" style="font-size: 0.725rem;">Portal Login Username</small>
+                        <span class="fw-semibold text-dark"><code>{{ user.username if user else 'Not registered' }}</code></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments/Schedule Column -->
+    <div class="col-lg-8" data-aos="fade-left">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 py-3 px-4">
+                <h5 class="fw-bold mb-0 text-dark" style="font-size: 1rem;"><i class="bi bi-calendar3 text-primary me-2"></i>Consultation Roster</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 crm-table">
+                        <thead>
+                            <tr>
+                                <th class="px-4">Patient ID</th>
+                                <th>Patient Name</th>
+                                <th>Consult Date</th>
+                                <th>Time Slot</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if appointments %}
+                                {% for appt in appointments %}
+                                <tr>
+                                    <td class="px-4"><span class="fw-bold text-muted">P{{"%03d"|format(appt.patient.id)}}</span></td>
+                                    <td class="fw-semibold text-dark">
+                                        <a href="{{ url_for('patients.view', patient_id=appt.patient.id) }}" class="text-decoration-none text-dark hover-primary">
+                                            {{ appt.patient.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ appt.appointment_date.strftime('%d-%b-%Y') }}</td>
+                                    <td><span class="badge bg-light text-dark border">{{ appt.appointment_time }}</span></td>
+                                    <td>
+                                        {% if appt.status == 'Scheduled' %}
+                                            <span class="status-pill pill-info">Scheduled</span>
+                                        {% elif appt.status == 'Completed' %}
+                                            <span class="status-pill pill-success">Completed</span>
+                                        {% else %}
+                                            <span class="status-pill pill-danger">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                                        No scheduled appointments found for this doctor.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% block extra_js %}{% endblock %}
+{% endblock %}

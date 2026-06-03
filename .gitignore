@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+instance/
+*.db
+*.sqlite
+
+# ReportLab generated PDFs
+reports/*.pdf
+
+# Local environment / IDE
+.vscode/
+.idea/
+.venv/
+venv/
+ENV/
+env/
+.DS_Store

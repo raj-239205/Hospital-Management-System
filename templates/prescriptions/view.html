@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Prescription #RX-{{ "%04d"|format(prescription.id) }} - Hope Care{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        #sidebar-wrapper, .navbar-custom, .btn-print-group, footer {
+            display: none !important;
+        }
+        #page-content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .container-fluid {
+            padding: 0 !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4 btn-print-group">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center">
+            <a href="{{ url_for('prescriptions.index') }}" class="btn btn-light border me-3"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <h3 class="mb-1 text-primary-teal">Prescription #RX-{{ "%04d"|format(prescription.id) }}</h3>
+                <p class="text-muted mb-0">View or print clinical prescription instructions.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <button onclick="window.print();" class="btn btn-primary"><i class="bi bi-printer me-1"></i>Print Prescription</button>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-5">
+                <!-- Rx Pad Header -->
+                <div class="row mb-4">
+                    <div class="col-sm-6">
+                        <h3 class="text-primary-teal fw-bold mb-1"><i class="bi bi-hospital me-2"></i>HOPE GENERAL CLINIC</h3>
+                        <small class="text-muted">123 Healthcare Boulevard, Medical District</small>
+                    </div>
+                    <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
+                        <h4 class="fw-bold text-dark mb-1">PRESCRIPTION</h4>
+                        <span class="text-muted">ID: #RX-{{ "%04d"|format(prescription.id) }}</span><br>
+                        <span class="text-muted">Date: {{ prescription.date_written.strftime('%d-%b-%Y') }}</span>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Doctor Details -->
+                <div class="mb-4">
+                    <h5 class="fw-bold text-dark mb-1">Dr. {{ prescription.doctor.name }}</h5>
+                    <small class="text-muted d-block">{{ prescription.doctor.specialization }} | Exp: {{ prescription.doctor.experience }} Years</small>
+                    <small class="text-muted d-block">Phone: {{ prescription.doctor.phone }} | Email: {{ prescription.doctor.email }}</small>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Patient Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <span class="text-muted d-block small">PRESCRIPTION FOR:</span>
+                        <h6 class="fw-bold text-dark mb-1">{{ prescription.patient.name }}</h6>
+                        <p class="text-muted mb-0 small">
+                            Patient ID: P{{"%03d"|format(prescription.patient.id)}}<br>
+                            Age / Gender: {{ prescription.patient.age }} Years / {{ prescription.patient.gender }}<br>
+                            Blood Group: {{ prescription.patient.blood_group or 'Unknown' }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Symptoms & Diagnosis -->
+                <div class="row g-3 mb-4">
+                    {% if prescription.symptoms %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted d-block small fw-semibold">PRESENTED SYMPTOMS:</span>
+                            <span class="text-dark small">{{ prescription.symptoms }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if prescription.diagnosis %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="text-muted d-block small fw-semibold">CLINICAL DIAGNOSIS:</span>
+                            <span class="text-dark small">{{ prescription.diagnosis }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Medications (Rx content) -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-prescription text-danger fs-3 me-2"></i>
+                        <h5 class="fw-bold text-dark mb-0">Prescribed Medications</h5>
+                    </div>
+                    <div class="p-4 bg-light rounded-3 border border-dark-subtle">
+                        <p class="text-dark mb-0" style="white-space: pre-wrap; font-family: monospace; font-size: 0.95rem; line-height: 1.6;">{{ prescription.medications }}</p>
+                    </div>
+                </div>
+
+                <!-- Advice / Instructions -->
+                {% if prescription.instructions %}
+                <div class="mb-5">
+                    <span class="text-muted d-block small fw-semibold">SPECIAL ADVICE & INSTRUCTIONS:</span>
+                    <p class="text-muted mb-0 small" style="white-space: pre-wrap;">{{ prescription.instructions }}</p>
+                </div>
+                {% endif %}
+
+                <div class="row mt-5">
+                    <div class="col-sm-6 align-self-end">
+                        <p class="text-muted mb-0 small">This prescription is digital, verified, and active for pharmacy pickup.</p>
+                    </div>
+                    <div class="col-sm-6 text-sm-end mt-4 mt-sm-0">
+                        <div class="d-inline-block border-top border-dark-subtle pt-2" style="width: 220px;">
+                            <h6 class="mb-0 fw-bold">Dr. {{ prescription.doctor.name }}</h6>
+                            <small class="text-muted">Prescribing Medical Officer</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

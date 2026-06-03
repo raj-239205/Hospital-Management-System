@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Invoices & Billing - Hope Care{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h3 class="mb-1 text-primary-teal"><i class="bi bi-credit-card-2-back-fill me-2"></i>Invoices & Billing</h3>
+        <p class="text-muted mb-0">Track, generate, audit, and download patient treatment invoices.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('billing.generate') }}" class="btn btn-primary"><i class="bi bi-receipt me-1"></i>Generate New Invoice</a>
+    </div>
+</div>
+
+<!-- Search Form -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('billing.index') }}" class="row g-2">
+            <div class="col-md-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="Search by patient name...">
+                </div>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-teal-dark btn-primary"><i class="bi bi-search me-1"></i>Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="table-responsive-custom">
+    <table class="table table-hover table-custom align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Invoice ID</th>
+                <th>Patient</th>
+                <th>Generated Date</th>
+                <th>Charges Breakdown</th>
+                <th>GST Rate</th>
+                <th>Total Paid</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if bills %}
+                {% for bill in bills %}
+                <tr>
+                    <td><span class="fw-semibold">#INV-{{ "%05d"|format(bill.id) }}</span></td>
+                    <td>
+                        <div class="fw-semibold text-dark">
+                            <a href="{{ url_for('patients.view', patient_id=bill.patient.id) }}" class="text-decoration-none text-dark">
+                                {{ bill.patient.name }}
+                            </a>
+                        </div>
+                        <small class="text-muted">ID: P{{"%03d"|format(bill.patient.id)}}</small>
+                    </td>
+                    <td>{{ bill.date_generated.strftime('%d-%b-%Y %H:%M') }}</td>
+                    <td>
+                        <div style="font-size: 0.85rem;">
+                            <span class="text-muted">Consult:</span> ${{ bill.consultation_charges }} |
+                            <span class="text-muted">Room:</span> ${{ bill.room_charges }} |
+                            <span class="text-muted">Meds:</span> ${{ bill.medicine_charges }}
+                        </div>
+                    </td>
+                    <td>{{ bill.gst_rate }}%</td>
+                    <td><span class="fw-bold text-success">${{ bill.total_amount }}</span></td>
+                    <td>
+                        <div class="d-flex justify-content-center gap-1">
+                            <a href="{{ url_for('billing.view', bill_id=bill.id) }}" class="btn btn-sm btn-outline-teal" title="View Digital Receipt"><i class="bi bi-eye"></i></a>
+                            <a href="{{ url_for('billing.download', bill_id=bill.id) }}" class="btn btn-sm btn-outline-primary" title="Download PDF"><i class="bi bi-file-pdf"></i> PDF</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="bi bi-receipt-cutoff fs-1 d-block mb-3"></i>
+                        No invoice records registered.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <nav class="mt-4" aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('billing.index', page=pagination.prev_num, search=search_query) }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('billing.index', page=page_num, search=search_query) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('billing.index', page=pagination.next_num, search=search_query) }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
