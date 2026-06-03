@@ -100,3 +100,17 @@ Open your browser and navigate to `http://127.0.0.1:5000/`.
 - **Direct Email Notifications**: Integrate SMTP relays to email invoices directly to patients.
 - **Doctor Consultation Notes**: Text editor inside the patient profile for doctors to log treatment notes.
 - **REST API Security**: Secure REST endpoints using JWT keys.
+
+
+It is available on 2 platforms
+1.) Pythoneverywhere and access link for live demo is http://rajveer239.pythonanywhere.com/ 
+2.) Render and access link is  https://hospital-management-system-7plv.onrender.com
+
+
+It is not poosible in github because for github it is not possible to run at github deployment for any Python Flask application.
+
+Here is why:
+
+GitHub Pages is a static host: It acts like a folder of files. It can only serve files that the browser can run directly (like HTML, CSS, and basic JavaScript).
+Flask requires a Python Server: Flask needs an active backend server to run the Python code, process routing requests (like logging in, routing to dashboards), and read/write to the SQLite database. GitHub Pages does not run any servers.
+To have a live, working website with logins and databases, you must use a Python hosting service like Render or PythonAnywhere, which will automatically deploy your code from GitHub.
